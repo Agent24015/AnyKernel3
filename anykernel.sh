@@ -4,7 +4,7 @@
 ## AnyKernel setup
 # begin properties
 properties() { '
-kernel.string=RyZeN by K A R T H I K @ xda-developers
+kernel.string=Cosmic by Someone @ xda-developers
 do.devicecheck=1
 do.modules=0
 do.systemless=0
@@ -68,17 +68,21 @@ if mountpoint -q /data; then
   done
 fi
 
-# Uclamp tunables
-if [ -f /dev/cpuset/top-app/uclamp.max ]; then
-	ui_print "  • Uclamp supported kernel"
-	#Uclamp tuning
-	sysctl -w kernel.sched_util_clamp_min_rt_default=500
+UCLAMP=1
 
+# Uclamp tunables
+if [ $UCLAMP = 1 ]; then
+	ui_print "  • Uclamp supported kernel"
+	# Uclamp tuning
+	sysctl -w kernel.sched_util_clamp_min_rt_default=500
+	sysctl -w kernel.sched_util_clamp_min=128
+	sysctl -w net.ipv4.tcp_congestion_control=westwood
 	#top-app
 	echo max > /dev/cpuset/top-app/uclamp.max
 	echo 10  > /dev/cpuset/top-app/uclamp.min
 	echo 1   > /dev/cpuset/top-app/uclamp.boosted
 	echo 1   > /dev/cpuset/top-app/uclamp.latency_sensitive
+
 
 	#foreground
 	echo 50 > /dev/cpuset/foreground/uclamp.max
@@ -86,11 +90,13 @@ if [ -f /dev/cpuset/top-app/uclamp.max ]; then
 	echo 0  > /dev/cpuset/foreground/uclamp.boosted
 	echo 0  > /dev/cpuset/foreground/uclamp.latency_sensitive
 
+
 	#background
 	echo max > /dev/cpuset/background/uclamp.max
 	echo 20  > /dev/cpuset/background/uclamp.min
 	echo 0   > /dev/cpuset/background/uclamp.boosted
 	echo 0   > /dev/cpuset/background/uclamp.latency_sensitive
+
 
 	#system-background
 	echo 40 > /dev/cpuset/system-background/uclamp.max
@@ -98,6 +104,16 @@ if [ -f /dev/cpuset/top-app/uclamp.max ]; then
 	echo 0  > /dev/cpuset/system-background/uclamp.boosted
 	echo 0  > /dev/cpuset/system-background/uclamp.latency_sensitive
 
+	#camera-daemon
+	echo 20 > /dev/cpuset/camera-daemon/uclamp.max
+	echo 0 > /dev/cpuset/camera-daemon/uclamp.min
+	echo 0  > /dev/cpuset/camera-daemon/uclamp.latency_sensitive
+
+	#additional optimizations
+	echo 0 > /proc/sys/kernel/sched_schedstats
+	echo -1 > /proc/sys/kernel/sched_rt_runtime_us
+	echo 0 > /sys/block/mmcblk1/queue/iostats
+	echo 0 > /sys/block/mmcblk0/queue/iostats
 fi
 
 write_boot;
